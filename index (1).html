@@ -1,16 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCHS COUNTDOWN TEST</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GCHS countdowns</title>
 
-    <!-- Favicon (icon in the tab) -->
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+<!-- Favicon (icon in the tab) -->
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #222;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  /* Top bar */
+  .topbar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 2000;
+  }
+  button.info-btn {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  button.info-btn:hover { background: #666; }
+
+  /* Main countdown */
+  #eventName {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  #daysRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #daysRemaining {
+    font-size: 10vw;
+    font-weight: bold;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
+  }
+  #daysUnit {
+    font-size: 3.2vw;
+    opacity: .9;
+  }
+  #countdown {
+    font-size: 2.6vw;
+    margin-top: 20px;
+    font-family: monospace;
+  }
+
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #333;
+    color: #eee;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 420px;
+    text-align: left;
+    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    z-index: 3000;
+  }
+  .modal h2 { margin-top: 0; }
+  .modal button {
+    margin-top: 15px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #555;
+    color: #fff;
+    cursor: pointer;
+  }
+  .modal button:hover { background: #777; }
+
+  /* Add-ons */
+  .inline-info-btn{
+    margin-left:10px;background:#444;color:#fff;border:none;
+    width:28px;height:28px;border-radius:50%;cursor:pointer
+  }
+  .inline-info-btn:hover{background:#666}
+  .more-btn{
+    background:#444;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer
+  }
+  .more-btn:hover{background:#666}
+  .more-menu{
+    position:absolute;top:50px;right:10px;background:#333;color:#eee;border-radius:12px;
+    box-shadow:0 12px 30px rgba(0,0,0,.4);display:none;min-width:280px;z-index:2500
+  }
+  .more-menu .item{padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.08)}
+  .more-menu .item:hover{background:#3a3a3a}
+  .more-menu .section{padding:10px 14px}
+  .more-menu .section h4{margin:0 0 6px 0;font-size:.95rem;color:#ccc}
+  .more-menu .section input{
+    width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:#222;color:#eee
+  }
+  .more-menu .section button{
+    margin-top:8px;padding:6px 10px;border:none;border-radius:8px;background:#555;color:#fff;cursor:pointer
+  }
+  .more-menu .section button:hover{background:#777}
+  .help-btn{
+    position:fixed;left:10px;bottom:10px;background:#444;color:#fff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;z-index:2600
+  }
+  .help-btn:hover{background:#666}
+</style>
 </head>
 <body>
 
-    <h1>If you can see this, it worked.</h1>
+<div class="topbar">
+  <button class="info-btn" onclick="openInfo()">i</button>
+  <button id="moreBtn" class="more-btn">More Countdowns</button>
+</div>
+
+<div id="eventName">Last Day of School</div>
+<div id="daysRow">
+  <span id="daysRemaining">Loading...</span>
+  <span id="daysUnit">days</span>
+  <button id="inlineInfo" class="inline-info-btn" title="Active countdown info">i</button>
+</div>
+<div id="countdown">-- hours -- minutes -- seconds</div>
+
+<!-- Info modal -->
+<div class="modal" id="infoModal">
+  <h2>Countdown Info</h2>
+  <p><b>Last Day of School:</b> Countdown until the final school day.</p>
+  <p><b>Winter Break:</b> Countdown until the first day of winter break.</p>
+  <p><b>Spring Break:</b> Countdown until the first day of spring break.</p>
+  <p><b>Thanksgiving Break:</b> Countdown until the first day of Thanksgiving break.</p>
+  <p><b>Graduation:</b> Countdown until graduation day.</p>
+  <p><b>Homecoming:</b> Countdown until Homecoming day.</p>
+  <p><b>Prom:</b> Countdown until Prom.</p>
+  <p><b>Senior Finals:</b> Countdown to the first day of senior final exams.</p>
+  <p><b>Underclass Finals:</b> Countdown to the first day of freshmen sophomore junior final exams.</p>
+  <button onclick="closeInfo()">Close</button>
+</div>
+
+<!-- Active countdown info modal -->
+<div class="modal" id="activeInfoModal">
+  <h2>Active Countdown</h2>
+  <p id="activeInfoText"></p>
+  <button id="activeInfoClose">Close</button>
+</div>
+
+<!-- More Countdowns menu -->
+<div class="more-menu" id="moreMenu">
+  <div class="item" data-key="lastDay">Last Day of School</div>
+  <div class="item" data-key="winterBreak">Winter Break</div>
+  <div class="item" data-key="springBreak">Spring Break</div>
+  <div class="item" data-key="thanksgivingBreak">Thanksgiving Break</div>
+  <div class="item" data-key="graduation">Graduation</div>
+  <div class="item" data-key="homecoming">Homecoming</div>
+  <div class="item" data-key="prom">Prom</div>
+  <div class="item" data-key="seniorFinals">Senior Finals</div>
+  <div class="item" data-key="underclassFinals">Underclass Finals</div>
+  <div class="section">
+    <h4>How long until day is over</h4>
+    <input id="dayOverTime" type="time" />
+    <button id="dayOverGo">Confirm</button>
+    <div id="dayOverResult" style="margin-top:6px;"></div>
+  </div>
+</div>
+
+<!-- Help modal trigger (inline open/close so it always works) -->
+<button class="help-btn" id="helpBtn"
+        onclick="document.getElementById('helpModal').style.display='block'">
+  Help
+</button>
+<div class="modal" id="helpModal">
+  <h2>Help</h2>
+  <p style="white-space:pre-wrap">If there is an issue please just be patient. I'll probably find it soon and get it fixed I apologize in advance. But if something isn't accurate please tell the person you got the website from and eventually it'll get back to me to fix. I'm 1 person not multiple. This website was built with the help from ChatGPT but the idea was entirely human. Thank you-MVM (a freshman)</p>
+  <button id="helpClose"
+          onclick="document.getElementById('helpModal').style.display='none'">
+    Close
+  </button>
+</div>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  /* Event dates */
+  const events = {
+    lastDay:           { name: "Last Day of School",  date: "2026-05-22T00:00:00" },
+    winterBreak:       { name: "Winter Break",        date: "2025-12-22T00:00:00" },
+    springBreak:       { name: "Spring Break",        date: "2026-03-23T00:00:00" },
+    thanksgivingBreak: { name: "Thanksgiving Break",  date: "2025-11-26T00:00:00" },
+    graduation:        { name: "Graduation",          date: "2026-05-17T00:00:00" },
+    homecoming:        { name: "Homecoming",          date: "2025-09-19T00:00:00" },
+    prom:              { name: "Prom",                date: "2026-05-01T00:00:00" },
+    seniorFinals:      { name: "Senior Finals",       date: "2026-05-12T00:00:00" },
+    underclassFinals:  { name: "Underclass Finals",   date: "2026-05-20T00:00:00" }
+  };
+
+  let selectedEvent = "lastDay";
+
+  /* Utils */
+  const atMidnight = (d) => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
+  const pad = (n) => String(n).padStart(2,'0');
+  const unit = (n, one, many) => (n === 1 ? one : many);
+
+  // Exclusive count (reduced by 1 day)
+  function calculateRemainingDaysExclusive(today, finalDay) {
+    const start = atMidnight(today);
+    const end   = atMidnight(finalDay);
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const diff = Math.floor((end - start) / msPerDay);
+    return Math.max(0, diff);
+  }
+
+  function formatLabeledTime(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${pad(h)} ${unit(h, "hour", "hours")} ` +
+           `${pad(m)} ${unit(m, "minute", "minutes")} ` +
+           `${pad(s)} ${unit(s, "second", "seconds")}`;
+  }
+
+  function update() {
+    const now = new Date();
+    const todayMidnight = atMidnight(now);
+    const finalDay = new Date(events[selectedEvent].date);
+
+    const remainingDays = calculateRemainingDaysExclusive(todayMidnight, finalDay);
+
+    const nextMidnight = new Date(todayMidnight);
+    nextMidnight.setDate(nextMidnight.getDate() + 1);
+    let secondsLeft = Math.floor((nextMidnight - now) / 1000);
+    if (secondsLeft <= 0) secondsLeft = 24 * 3600;
+
+    document.getElementById("eventName").textContent = events[selectedEvent].name;
+    document.getElementById("daysRemaining").textContent = remainingDays;
+    document.getElementById("daysUnit").textContent = unit(remainingDays, "day", "days");
+    document.getElementById("countdown").textContent = formatLabeledTime(secondsLeft);
+  }
+
+  window.openInfo  = () => { document.getElementById("infoModal").style.display = "block"; };
+  window.closeInfo = () => { document.getElementById("infoModal").style.display = "none"; };
+
+  const moreBtn  = document.getElementById("moreBtn");
+  const moreMenu = document.getElementById("moreMenu");
+  moreBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    moreMenu.style.display = (moreMenu.style.display === "block") ? "none" : "block";
+  });
+  moreMenu.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => { moreMenu.style.display = "none"; });
+
+  moreMenu.querySelectorAll(".item").forEach(item => {
+    item.addEventListener("click", () => {
+      selectedEvent = item.getAttribute("data-key");
+      update();
+      moreMenu.style.display = "none";
+    });
+  });
+
+  const dayOverInput  = document.getElementById("dayOverTime");
+  const dayOverBtn    = document.getElementById("dayOverGo");
+  const dayOverResult = document.getElementById("dayOverResult");
+  (function prefill() {
+    const now = new Date();
+    dayOverInput.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  })();
+  function humanLeftLabel(minutes) {
+    if (minutes <= 0) return "School day is over";
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    const parts = [];
+    if (h > 0) parts.push(h + " " + (h === 1 ? "hour" : "hours"));
+    if (m > 0) parts.push(m + " " + (m === 1 ? "minute" : "minutes"));
+    return parts.join(" ") + " left";
+  }
+  dayOverBtn.addEventListener("click", () => {
+    const v = dayOverInput.value;
+    if (!v) { dayOverResult.textContent = "Please enter a time."; return; }
+    const [hh, mm] = v.split(":").map(Number);
+    const today = new Date();
+    const entered = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 15, 10, 0, 0);
+    const diffMin = Math.max(0, Math.round((end - entered) / 60000));
+    dayOverResult.textContent = humanLeftLabel(diffMin);
+  });
+
+  const inlineInfoBtn = document.getElementById("inlineInfo");
+  inlineInfoBtn.addEventListener("click", () => {
+    const ev = events[selectedEvent];
+    const d = new Date(ev.date);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    document.getElementById("activeInfoText").textContent =
+      `${ev.name} on ${d.toLocaleDateString([], { weekday:"long", year:"numeric", month:"long", day:"numeric" })} • ${tz}`;
+    document.getElementById("activeInfoModal").style.display = "block";
+  });
+  document.getElementById("activeInfoClose").addEventListener("click", () => {
+    document.getElementById("activeInfoModal").style.display = "none";
+  });
+
+  update();
+  setInterval(update, 1000);
+});
+</script>
 
 </body>
 </html>
